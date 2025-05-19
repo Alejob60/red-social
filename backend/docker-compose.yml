@@ -1,0 +1,104 @@
+version: '3.8'
+
+services:
+  # Base de datos para Auth
+  auth-db:
+    image: postgres:15
+    container_name: auth-db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: authdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - authdata:/var/lib/postgresql/data
+    networks:
+      - backendnet
+
+  # Base de datos para User
+  user-db:
+    image: postgres:15
+    container_name: user-db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: userdb
+    ports:
+      - "5433:5432"
+    volumes:
+      - userdata:/var/lib/postgresql/data
+    networks:
+      - backendnet
+
+  # Base de datos para Post
+  post-db:
+    image: postgres:15
+    container_name: post-db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postdb
+    ports:
+      - "5434:5432"
+    volumes:
+      - postdata:/var/lib/postgresql/data
+    networks:
+      - backendnet
+
+  # Servicio de autenticación
+  auth-service:
+    build:
+      context: ./auth-service
+    container_name: auth-service
+    restart: always
+    env_file:
+      - ./auth-service/.env
+    ports:
+      - "3000:3000"
+    depends_on:
+      - auth-db
+    networks:
+      - backendnet
+
+  # Servicio de usuarios
+  user-service:
+    build:
+      context: ./user-service
+    container_name: user-service
+    restart: always
+    env_file:
+      - ./user-service/.env
+    ports:
+      - "3001:3001"
+    depends_on:
+      - user-db
+    networks:
+      - backendnet
+
+  # Servicio de publicaciones
+  post-service:
+    build:
+      context: ./post-service
+    container_name: post-service
+    restart: always
+    env_file:
+      - ./post-service/.env
+    ports:
+      - "3002:3002"
+    depends_on:
+      - post-db
+    networks:
+      - backendnet
+
+volumes:
+  authdata:
+  userdata:
+  postdata:
+
+networks:
+  backendnet:
+    driver: bridge
